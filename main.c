@@ -9,25 +9,26 @@
 #define IR_DEFAULT_FILENAME "images/out"
 #define I_EXT ".pgm"
 
-char *getFilename(const char *filename)
-{
+char *getFilename(const char *filename) {
   size_t f_name_len = strlen(filename) + strlen(I_EXT) + (size_t)1;
   char *file_ext = calloc(f_name_len, sizeof(char));
-  strcat(file_ext, filename);
-  strcat(file_ext, I_EXT);
+  if (file_ext != NULL) {
+    strcat(file_ext, filename);
+    strcat(file_ext, I_EXT);
+  }
   return file_ext;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
+  // file related var
   long int n_col, n_row, n_tot;
   char *io_fname, *ir_fname;
-  int *io, *ir;
   FILE *io_file, *ir_file;
-
+  int *io, *ir;
+  // stack var
   unsigned char chi;
-  char chaine[10];
-  long int k = 3, s = 1, nbg;
+  char string[10];
+  long int k, nbg;
   register long int r, c;
 
   long int hist[N_GRAY], histc[N_GRAY];
@@ -45,24 +46,21 @@ int main(int argc, char *argv[])
   printf("ir_fname : %s \n", ir_fname);
 
   // prepare files
-  if ((io_file = fopen(io_fname, "rb")) == NULL)
-  {
+  if ((io_file = fopen(io_fname, "rb")) == NULL) {
     printf("Error : can't open input file\n");
     return EXIT_FAILURE;
   }
-  if ((ir_file = fopen(ir_fname, "wb+")) == NULL)
-  {
+  if ((ir_file = fopen(ir_fname, "wb+")) == NULL) {
     printf("Error : can't create output file\n");
     return EXIT_FAILURE;
   }
 
   // lecture entete pgm
-  fscanf(io_file, "%s\n", chaine);
-  fprintf(ir_file, "%s\n", chaine);
+  fscanf(io_file, "%s\n", string);
+  fprintf(ir_file, "%s\n", string);
 
   r = 0;
-  while (r < 1)
-  {
+  while (r < 1) {
     chi = fgetc(io_file);
     fputc(chi, ir_file);
     if (chi == '\n')
@@ -84,45 +82,54 @@ int main(int argc, char *argv[])
   if (io == NULL || ir == NULL)
     printf("Error : malloc failed \n");
 
-  ///////////////////////////////////////////////////////////////////
-  // TRAITEMENT
-
-  /*
-  // histogram init
-  for (k = 0; k < N_GRAY; k++)
-    hist[k] = 0;
-  // histogram construction
-  for (c = 0; c < n_col; c++)
-    for (r = 0; r < n_row; r++)
-      hist[io[c * n_col + r]]++;
-  */
-
-  int count = 0;
-  for (r = 0; r < n_row; r++)
-  {
-    for (c = 0; c < n_col; c++)
-    {
-      ir[r * n_col + c] = io[r * n_col + c];
-      count++;
+  // read i0 pixels
+  for (r = 0; r < n_row; r++) {
+    for (c = 0; c < n_col; c++) {
+      chi = (unsigned char)fgetc(io_file);
+      io[r * n_col + c] = (int)chi;
     }
   }
 
-  printf("elo %d\n", count);
+  // ==========================================================================
+  // Processing
+  // ==========================================================================
 
-  // FIN TRAITEMENT
-  ///////////////////////////////////////////////////////////////////
+  // histogram init
+  for (k = 0; k < N_GRAY; k++)
+    hist[k] = 0;
 
-  // Sauvegarde de l image r�sultat dans le fichier ir_file
-  for (r = 0; r < n_row; r++)
-  {
-    for (c = 0; c < n_col; c++)
-    {
+  // histogram construction
+  for (r = 0; r < n_row; r++) {
+    for (c = 0; c < n_col; c++) {
+      hist[io[r * n_col + c]]++;
+    }
+  }
+
+  // cumulated histogram construction
+  histc[0] = hist[0];
+  for (k = 1; k < N_GRAY; k++)
+    histc[k] = histc[k - 1] + hist[k];
+
+  // Histogram equalization
+  for (k = 0; k < N_GRAY; k++)
+    LUT[k] = (int)((histc[k] * (long int)(N_GRAY - 1)) / n_tot);
+
+  for (r = 0; r < n_row; r++) {
+    for (c = 0; c < n_col; c++) {
+      ir[r * n_col + c] = LUT[io[r * n_col + c]];
+    }
+  }
+
+  // ==========================================================================
+
+  // paste ir to ir_file
+  for (r = 0; r < n_row; r++) {
+    for (c = 0; c < n_col; c++) {
       fputc((unsigned char)ir[r * n_col + c], ir_file);
     }
   }
 
-  // lib�ration de de la m�moire des tableaux io et ir et fermeture des 2
-  // fichiers io_file et ir_file
+  // free
   free(io_fname);
   free(ir_fname);
   free(io);

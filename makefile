@@ -1,6 +1,6 @@
 CC=gcc
-#CFLAGS=-Wall -Wextra -Werror
-CFLAGS=
+CFLAGS=-Wall -Wextra -Werror
+
 
 all : main
 
