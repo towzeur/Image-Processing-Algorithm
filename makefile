@@ -1,18 +1,21 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -Werror
+CFLAGS=-Wall -Wextra -Werror -lm
 
+all : hist_equalization sobel negative
 
-all : main
+hist_equalization: hist_equalization.c
+	$(CC) hist_equalization.c -o bin/hist_equalization $(CFLAGS)
+	bin/hist_equalization
 
-main: main.c
-	$(CC) main.c -o main $(CFLAGS)
-	./main
+sobel: sobel.c
+	$(CC) sobel.c -o bin/sobel $(CFLAGS)
+	bin/sobel
 
-test: test.c
-	$(CC) test.c -o test $(CFLAGS)
-	./test
+negative: negative.c
+	$(CC) negative.c -o bin/negative $(CFLAGS)
+	bin/negative
 
 clean:
-	rm *.o
+	@rm *.o bin/*
 
-.PHONY: clean main test
+.PHONY: clean hist_equalization test
