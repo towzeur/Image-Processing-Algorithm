@@ -1,8 +1,0 @@
-{
-    "editor.formatOnSave": true,
-    "clang-format.executable": "/usr/bin/clang-format",
-    "files.associations": {
-        "typeinfo": "c"
-    },
-    "cmake.configureOnOpen": true
-}
